@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"strings"
@@ -23,14 +24,12 @@ const (
 func main() {
 	arguments := os.Args
 	if len(arguments) == 1 {
-		fmt.Println("Please provide port number")
+		log.Println("Please provide port number")
 		return
 	}
 
-	store := store.NewDB()
-
-	PORT := ":" + arguments[1]
-	l, err := net.Listen("tcp", PORT)
+	port := ":" + arguments[1]
+	l, err := net.Listen("tcp", port)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -43,67 +42,72 @@ func main() {
 		return
 	}
 
+	store := store.NewDB()
+
 	for {
-		command, err := bufio.NewReader(c).ReadString('\n')
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		handleRequest(c, store)
+	}
+}
 
-		switch {
-		case strings.HasPrefix(command, commandSet):
-			splitted := strings.Split(command, " ")
-			if len(splitted) != 3 {
-				writeRes(c, errWrongCommand)
-				break
-			}
+func handleRequest(c net.Conn, store store.DBHandler) {
+	command, err := bufio.NewReader(c).ReadString('\n')
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-			key := sanitizeStr(splitted[1])
-			if store.Get(key) != "" {
-				writeRes(c, errKeyAlreadyExist)
-				break
-			}
-
-			value := sanitizeStr(splitted[2])
-			store.Set(key, value)
-			writeRes(c, "OK")
-		case strings.HasPrefix(command, commandDump):
-			splitted := strings.Split(command, " ")
-			if len(splitted) != 2 {
-				writeRes(c, errWrongCommand)
-				break
-			}
-
-			key := sanitizeStr(splitted[1])
-			value := store.Get(key)
-			if value == "" {
-				writeRes(c, errNotFound)
-				break
-			}
-
-			writeRes(c, value)
-		case strings.HasPrefix(command, commandRename):
-			splitted := strings.Split(command, " ")
-			if len(splitted) != 3 {
-				writeRes(c, errWrongCommand)
-				break
-			}
-
-			oldKey := sanitizeStr(splitted[1])
-			value := store.Get(oldKey)
-			if value == "" {
-				writeRes(c, errNotFound)
-				break
-			}
-
-			store.Delete(oldKey)
-			newKey := sanitizeStr(splitted[2])
-			store.Set(newKey, value)
-			writeRes(c, "OK")
-		default:
+	switch {
+	case strings.HasPrefix(command, commandSet):
+		splitted := strings.Split(command, " ")
+		if len(splitted) != 3 {
 			writeRes(c, errWrongCommand)
+			break
 		}
 
+		key := sanitizeStr(splitted[1])
+		if store.Get(key) != "" {
+			writeRes(c, errKeyAlreadyExist)
+			break
+		}
+
+		value := sanitizeStr(splitted[2])
+		store.Set(key, value)
+		writeRes(c, "OK")
+	case strings.HasPrefix(command, commandDump):
+		splitted := strings.Split(command, " ")
+		if len(splitted) != 2 {
+			writeRes(c, errWrongCommand)
+			break
+		}
+
+		key := sanitizeStr(splitted[1])
+		value := store.Get(key)
+		if value == "" {
+			writeRes(c, errNotFound)
+			break
+		}
+
+		writeRes(c, value)
+	case strings.HasPrefix(command, commandRename):
+		splitted := strings.Split(command, " ")
+		if len(splitted) != 3 {
+			writeRes(c, errWrongCommand)
+			break
+		}
+
+		oldKey := sanitizeStr(splitted[1])
+		value := store.Get(oldKey)
+		if value == "" {
+			writeRes(c, errNotFound)
+			break
+		}
+
+		store.Delete(oldKey)
+		newKey := sanitizeStr(splitted[2])
+		store.Set(newKey, value)
+		writeRes(c, "OK")
+	default:
+		writeRes(c, errWrongCommand)
 	}
 }
 

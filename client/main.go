@@ -9,13 +9,14 @@ import (
 
 func main() {
 	arguments := os.Args
-	if len(arguments) == 1 {
-		fmt.Println("Please provide host:port.")
+	if len(arguments) < 3 {
+		fmt.Println("Please provide host and port.")
 		return
 	}
 
-	CONNECT := arguments[1]
-	c, err := net.Dial("tcp", CONNECT)
+	host := arguments[1]
+	port := arguments[2]
+	c, err := net.Dial("tcp", host+":"+port)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -23,9 +24,9 @@ func main() {
 
 	for {
 		reader := bufio.NewReader(os.Stdin)
-		fmt.Print(">> ")
-		text, _ := reader.ReadString('\n')
-		fmt.Fprintf(c, text+"\n")
+		fmt.Print("mockRedis$> ")
+		command, _ := reader.ReadString('\n')
+		fmt.Fprintf(c, command+"\n")
 
 		buf := make([]byte, 1024)
 		_, err := c.Read(buf)
@@ -33,6 +34,6 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-		fmt.Print("->: " + string(buf))
+		fmt.Print(">>: " + string(buf))
 	}
 }
