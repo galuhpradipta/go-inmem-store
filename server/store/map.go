@@ -1,29 +1,29 @@
 package store
 
-func NewDB() DBHandler {
-	return &dbHandler{
+func NewStore() StoreHandler {
+	return &storeHandler{
 		Map: make(map[string]string),
 	}
 }
 
-type dbHandler struct {
+type storeHandler struct {
 	Map map[string]string
 }
 
-type DBHandler interface {
+type StoreHandler interface {
 	Set(key, value string)
 	Get(Key string) string
 	Delete(key string)
 }
 
-func (db *dbHandler) Set(key, value string) {
-	db.Map[key] = value
+func (s *storeHandler) Set(key, value string) {
+	s.Map[key] = value
 }
 
-func (db *dbHandler) Get(key string) string {
-	return db.Map[key]
+func (s *storeHandler) Get(key string) string {
+	return s.Map[key]
 }
 
-func (db *dbHandler) Delete(key string) {
-	delete(db.Map, key)
+func (s *storeHandler) Delete(key string) {
+	delete(s.Map, key)
 }

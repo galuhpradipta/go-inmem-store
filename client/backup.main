@@ -25,11 +25,14 @@ func main() {
 	for {
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("mockRedis$> ")
-		command, _ := reader.ReadString('\n')
+		command, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println(err)
+		}
 		fmt.Fprintf(c, command+"\n")
 
 		buf := make([]byte, 1024)
-		_, err := c.Read(buf)
+		_, err = c.Read(buf)
 		if err != nil {
 			fmt.Println(err)
 			return

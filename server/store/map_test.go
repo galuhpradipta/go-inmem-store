@@ -38,14 +38,14 @@ func Test_dbHandler_Set(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		db := &dbHandler{
+		db := &storeHandler{
 			Map: tt.mockStore.Map,
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
 			db.Set(tt.args.key, tt.args.value)
 			if tt.mockStore.Map[tt.args.key] != tt.args.value {
-				t.Errorf("dbHandler.Get() = %v, want %v", db.Get(tt.args.key), "")
+				t.Errorf("storeHandler.Get() = %v, want %v", db.Get(tt.args.key), "")
 			}
 		})
 	}
@@ -94,7 +94,7 @@ func Test_dbHandler_Get(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		db := &dbHandler{
+		db := &storeHandler{
 			Map: tt.mockStore.Map,
 		}
 
@@ -134,7 +134,7 @@ func Test_dbHandler_Delete(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		db := &dbHandler{
+		db := &storeHandler{
 			Map: tt.mockStore.Map,
 		}
 
