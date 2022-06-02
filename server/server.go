@@ -7,6 +7,16 @@ import (
 	"net"
 	"os"
 	"strings"
+
+	"github.com/galuhpradipta/go-inmem-db/server/services"
+	"github.com/galuhpradipta/go-inmem-db/server/store"
+)
+
+const (
+	cmdQuit = "QUIT"
+	cmdHelp = "HELP"
+
+	msgCloseConn = "client closing connection"
 )
 
 func main() {
@@ -23,6 +33,9 @@ func main() {
 	}
 	defer listener.Close()
 
+	store := store.NewStore()
+	svc := services.NewInMemHandler(store)
+
 	for {
 		con, err := listener.Accept()
 		if err != nil {
@@ -30,38 +43,42 @@ func main() {
 			continue
 		}
 
-		go handleClientRequest(con)
+		go handleClientRequest(con, svc)
 	}
 }
 
-func handleClientRequest(con net.Conn) {
+func handleClientRequest(con net.Conn, svc services.InMemHandler) {
 	defer con.Close()
 
 	clientReader := bufio.NewReader(con)
-
 	for {
-		clientRequest, err := clientReader.ReadString('\n')
-
+		cmd, err := clientReader.ReadString('\n')
+		cmd = strings.TrimSuffix(cmd, ";\n")
 		switch err {
 		case nil:
-			clientRequest := strings.TrimSpace(clientRequest)
-			if clientRequest == ":QUIT" {
-				log.Println("client requested server to close the connection so closing")
+			if cmd == cmdQuit {
+				log.Println(msgCloseConn)
 				return
-			} else {
-				log.Println(clientRequest)
 			}
 		case io.EOF:
-			log.Println("client closed the connection by terminating the process")
+			log.Println(msgCloseConn)
 			return
 		default:
 			log.Printf("error: %v\n", err)
 			return
 		}
 
-		// Responding to the client request
-		if _, err = con.Write([]byte("GOT IT!\n")); err != nil {
+		res, err := svc.Run(cmd)
+		if err != nil {
+			res = err.Error()
+		}
+
+		if _, err = con.Write(formatCmd(res)); err != nil {
 			log.Printf("failed to respond to client: %v\n", err)
 		}
 	}
+}
+
+func formatCmd(cmd string) []byte {
+	return []byte(cmd + ";")
 }
