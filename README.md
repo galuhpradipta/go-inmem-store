@@ -36,3 +36,10 @@ $ go build . && ./client [HOST] [PORT]
 - QUIT
 ```
 
+## Error Definition
+```
+errCmdNotFound     = "command not found"
+errInvalidCommand  = "invalid command"
+errKeyAlreadyExist = "key already exist"
+errNotFound        = "key value not found"
+```
